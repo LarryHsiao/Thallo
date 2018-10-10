@@ -10,6 +10,7 @@ import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
 import android.widget.ArrayAdapter
+import androidx.databinding.ObservableMap
 import com.silverhetch.aura.AuraFragment
 import com.silverhetch.thallo.discovery.CRemoteDevice
 import kotlinx.android.synthetic.main.fragment_device_discovery.*
@@ -41,7 +42,18 @@ class BtDiscoveryFragment : AuraFragment(), ServiceConnection {
 
     override fun onServiceConnected(name: ComponentName?, service: IBinder?) {
         btDiscovery_list.adapter = ArrayAdapter<CRemoteDevice>(context!!, android.R.layout.simple_list_item_1).also {
-            it.addAll((service as BtService.BtServiceBinder).discovery().remoteDevice())
+            val discovery = (service as BtService.BtServiceBinder).discovery()
+            it.addAll(discovery.remoteDevice().values)
+            discovery.remoteDevice().addOnMapChangedCallback(object : ObservableMap.OnMapChangedCallback<ObservableMap<String, CRemoteDevice>, String, CRemoteDevice>() {
+                override fun onMapChanged(sender: ObservableMap<String, CRemoteDevice>?, key: String?) {
+                    activity!!.runOnUiThread {
+                        it.clear()
+                        if (sender != null) {
+                            it.addAll(sender.values)
+                        }
+                    }
+                }
+            })
         }
     }
 }

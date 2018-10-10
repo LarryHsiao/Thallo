@@ -1,5 +1,8 @@
 package com.silverhetch.thallo.discovery
 
+import androidx.databinding.ObservableList
+import androidx.databinding.ObservableMap
+
 /**
  * Device discovery.
  */
@@ -23,5 +26,5 @@ interface Discovery {
     /**
      * Current maintained remote devices.
      */
-    fun remoteDevice(): List<CRemoteDevice>
+    fun remoteDevice(): ObservableMap<String,CRemoteDevice>
 }

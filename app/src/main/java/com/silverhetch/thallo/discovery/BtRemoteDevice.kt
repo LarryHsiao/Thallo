@@ -7,6 +7,10 @@ import android.bluetooth.BluetoothDevice
  */
 class BtRemoteDevice(private val bluetoothDevice: BluetoothDevice) : CRemoteDevice {
     override fun name(): String {
-        return bluetoothDevice.name
+        return bluetoothDevice.name ?:""
+    }
+
+    override fun toString(): String {
+        return name() + " "+bluetoothDevice.address
     }
 }
