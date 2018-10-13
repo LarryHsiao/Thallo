@@ -1,9 +1,10 @@
 package com.silverhetch.thallo.discovery
 
 import android.bluetooth.BluetoothAdapter
+import android.bluetooth.BluetoothAdapter.ACTION_DISCOVERY_FINISHED
+import android.bluetooth.BluetoothAdapter.ACTION_DISCOVERY_STARTED
 import android.bluetooth.BluetoothDevice
-import android.bluetooth.BluetoothDevice.ACTION_FOUND
-import android.bluetooth.BluetoothDevice.EXTRA_DEVICE
+import android.bluetooth.BluetoothDevice.*
 import android.content.BroadcastReceiver
 import android.content.Context
 import android.content.Intent
@@ -25,20 +26,21 @@ class BtDiscovery(private val context: Context, private val adapter: BluetoothAd
         adapter.bondedDevices.forEach {
             remoteDevice[it.address] = BtRemoteDevice(it)
         }
-        context.registerReceiver(receiver, IntentFilter(ACTION_FOUND))
+        context.registerReceiver(receiver, IntentFilter().apply {
+            addAction(ACTION_FOUND)
+            addAction(ACTION_DISCOVERY_STARTED)
+            addAction(ACTION_DISCOVERY_FINISHED)
+        })
         executor.scheduleAtFixedRate({
-            Log.i("FixedRate", "Fixed rate")
             if (adapter.isDiscovering.not()) {
-                remoteDevice.clear()
+                // #startDiscovery() when previous not complete will cause #startDiscovery() blocks forever
                 adapter.startDiscovery()
             }
-            Log.i("FixedRate", "Fixed rate2")
         }, 0, 10, TimeUnit.SECONDS)
     }
 
     override fun stop() {
         context.unregisterReceiver(receiver)
-        remoteDevice.clear()
         executor.shutdown()
     }
 
@@ -51,11 +53,18 @@ class BtDiscovery(private val context: Context, private val adapter: BluetoothAd
     }
 
     private val receiver = object : BroadcastReceiver() {
+        private val tempDevices = ObservableArrayMap<String, CRemoteDevice>()
         override fun onReceive(context: Context, intent: Intent) {
             when (intent.action) {
                 ACTION_FOUND -> {
                     val device: BluetoothDevice = intent.getParcelableExtra(EXTRA_DEVICE)
-                    remoteDevice[device.address] = BtRemoteDevice(device)
+
+                    tempDevices[device.address] = BtRemoteDevice(device)
+                }
+                ACTION_DISCOVERY_FINISHED -> {
+                    remoteDevice.clear()
+                    remoteDevice.putAll(tempDevices.toMap())
+                    tempDevices.clear()
                 }
             }
         }
