@@ -9,27 +9,29 @@ import android.content.BroadcastReceiver
 import android.content.Context
 import android.content.Intent
 import android.content.IntentFilter
-import android.util.Log
+import android.os.Handler
+import android.os.Looper
 import androidx.databinding.ObservableArrayMap
 import androidx.databinding.ObservableMap
 import java.util.concurrent.Executors
 import java.util.concurrent.TimeUnit
 
 /**
- * Device discovery by Bluetooth.
+ * Remote Device discovery by Bluetooth.
+ *
+ * Device UUID: e6c50c73-12ca-47d6-a718-e5ec97a6d407
  */
 class BtDiscovery(private val context: Context, private val adapter: BluetoothAdapter) : Discovery {
     private val executor = Executors.newScheduledThreadPool(1)
     private val remoteDevice = ObservableArrayMap<String, CRemoteDevice>()
+    private val mainHandler = Handler(Looper.getMainLooper())
 
     override fun start() {
-        adapter.bondedDevices.forEach {
-            remoteDevice[it.address] = BtRemoteDevice(it)
-        }
         context.registerReceiver(receiver, IntentFilter().apply {
             addAction(ACTION_FOUND)
             addAction(ACTION_DISCOVERY_STARTED)
             addAction(ACTION_DISCOVERY_FINISHED)
+            addAction(ACTION_UUID)
         })
         executor.scheduleAtFixedRate({
             if (adapter.isDiscovering.not()) {
@@ -53,18 +55,23 @@ class BtDiscovery(private val context: Context, private val adapter: BluetoothAd
     }
 
     private val receiver = object : BroadcastReceiver() {
-        private val tempDevices = ObservableArrayMap<String, CRemoteDevice>()
         override fun onReceive(context: Context, intent: Intent) {
             when (intent.action) {
                 ACTION_FOUND -> {
                     val device: BluetoothDevice = intent.getParcelableExtra(EXTRA_DEVICE)
-
-                    tempDevices[device.address] = BtRemoteDevice(device)
+                    mainHandler.post {
+                        device.fetchUuidsWithSdp()
+                    }
                 }
-                ACTION_DISCOVERY_FINISHED -> {
-                    remoteDevice.clear()
-                    remoteDevice.putAll(tempDevices.toMap())
-                    tempDevices.clear()
+                ACTION_UUID -> {
+                    val device: BluetoothDevice = intent.getParcelableExtra(EXTRA_DEVICE)
+                    if (device.uuids != null) {
+                        device.uuids.forEach {
+                            if (it.uuid.toString() == "07d4a697-ece5-18a7-d647-ca12730cc5e6"){
+                                remoteDevice[device.address] = BtRemoteDevice(device)
+                            }
+                        }
+                    }
                 }
             }
         }
