@@ -1,7 +1,6 @@
 package com.silverhetch.thallo.discovery
 
-import androidx.databinding.ObservableList
-import androidx.databinding.ObservableMap
+import androidx.lifecycle.LiveData
 
 /**
  * Device discovery.
@@ -19,6 +18,11 @@ interface Discovery {
     fun start()
 
     /**
+     * Trigger a search process
+     */
+    fun search()
+
+    /**
      * Indicate discovering process is running.
      */
     fun running(): Boolean
@@ -26,5 +30,5 @@ interface Discovery {
     /**
      * Current maintained remote devices.
      */
-    fun remoteDevice(): ObservableMap<String,CRemoteDevice>
+    fun remoteDevice(): LiveData<MutableMap<String, CRemoteDevice>>
 }

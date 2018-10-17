@@ -10,7 +10,8 @@ import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
 import android.widget.ArrayAdapter
-import androidx.databinding.ObservableMap
+import androidx.lifecycle.Observer
+import androidx.navigation.Navigation
 import com.silverhetch.aura.AuraFragment
 import com.silverhetch.thallo.discovery.CRemoteDevice
 import kotlinx.android.synthetic.main.fragment_device_discovery.*
@@ -41,19 +42,28 @@ class BtDiscoveryFragment : AuraFragment(), ServiceConnection {
     }
 
     override fun onServiceConnected(name: ComponentName?, service: IBinder?) {
-        btDiscovery_list.adapter = ArrayAdapter<CRemoteDevice>(context!!, android.R.layout.simple_list_item_1).also {
+        ArrayAdapter<CRemoteDevice>(context!!, android.R.layout.simple_list_item_1).also { arrayAdapter ->
             val discovery = (service as BtService.BtServiceBinder).discovery()
-            it.addAll(discovery.remoteDevice().values)
-            discovery.remoteDevice().addOnMapChangedCallback(object : ObservableMap.OnMapChangedCallback<ObservableMap<String, CRemoteDevice>, String, CRemoteDevice>() {
-                override fun onMapChanged(sender: ObservableMap<String, CRemoteDevice>?, key: String?) {
-                    activity!!.runOnUiThread {
-                        it.clear()
-                        if (sender != null) {
-                            it.addAll(sender.values)
-                        }
-                    }
+            discovery.search()
+            btDiscovery_list.adapter = arrayAdapter
+            arrayAdapter.addAll(discovery.remoteDevice().value!!.values)
+            discovery.remoteDevice().observe(this, Observer<Map<String, CRemoteDevice>> { newValues ->
+                activity!!.runOnUiThread {
+                    arrayAdapter.clear()
+                    arrayAdapter.addAll(newValues!!.values)
                 }
             })
+
+            btDiscovery_list.setOnItemClickListener { _, _, position, id ->
+                arrayAdapter.getItem(position)?.let {
+                    Navigation.findNavController(btDiscovery_list).navigate(
+                            R.id.action_btDiscoveryFragment_to_deviceCommandFragment,
+                            DeviceCommandFragment.newArguments(it.address())
+                    )
+                }
+            }
         }
+
+
     }
 }

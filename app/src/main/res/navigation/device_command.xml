@@ -1,0 +1,22 @@
+<?xml version="1.0" encoding="utf-8"?>
+<navigation xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    xmlns:tools="http://schemas.android.com/tools"
+    android:id="@+id/device_command"
+    app:startDestination="@id/btDiscoveryFragment">
+
+    <fragment
+        android:id="@+id/btDiscoveryFragment"
+        android:name="com.silverhetch.thallo.BtDiscoveryFragment"
+        tools:layout="@layout/fragment_device_discovery"
+        android:label="BtDiscoveryFragment" >
+        <action
+            android:id="@+id/action_btDiscoveryFragment_to_deviceCommandFragment"
+            app:destination="@id/deviceCommandFragment" />
+    </fragment>
+    <fragment
+        android:id="@+id/deviceCommandFragment"
+        tools:layout="@layout/fragment_device_command"
+        android:name="com.silverhetch.thallo.DeviceCommandFragment"
+        android:label="DeviceCommandFragment" />
+</navigation>

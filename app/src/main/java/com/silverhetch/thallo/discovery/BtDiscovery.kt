@@ -11,8 +11,9 @@ import android.content.Intent
 import android.content.IntentFilter
 import android.os.Handler
 import android.os.Looper
-import androidx.databinding.ObservableArrayMap
-import androidx.databinding.ObservableMap
+import androidx.lifecycle.LiveData
+import androidx.lifecycle.MutableLiveData
+import java.util.*
 import java.util.concurrent.Executors
 import java.util.concurrent.TimeUnit
 
@@ -22,8 +23,9 @@ import java.util.concurrent.TimeUnit
  * Device UUID: e6c50c73-12ca-47d6-a718-e5ec97a6d407
  */
 class BtDiscovery(private val context: Context, private val adapter: BluetoothAdapter) : Discovery {
-    private val executor = Executors.newScheduledThreadPool(1)
-    private val remoteDevice = ObservableArrayMap<String, CRemoteDevice>()
+    private val remoteDevice = MutableLiveData<MutableMap<String, CRemoteDevice>>().apply {
+        value = HashMap()
+    }
     private val mainHandler = Handler(Looper.getMainLooper())
 
     override fun start() {
@@ -33,24 +35,25 @@ class BtDiscovery(private val context: Context, private val adapter: BluetoothAd
             addAction(ACTION_DISCOVERY_FINISHED)
             addAction(ACTION_UUID)
         })
-        executor.scheduleAtFixedRate({
-            if (adapter.isDiscovering.not()) {
-                // #startDiscovery() when previous not complete will cause #startDiscovery() blocks forever
-                adapter.startDiscovery()
-            }
-        }, 0, 10, TimeUnit.SECONDS)
+    }
+
+    override fun search() {
+        if (adapter.isDiscovering.not()) {
+            // #startDiscovery() when previous not complete will cause #startDiscovery() blocks forever
+            adapter.startDiscovery()
+        }
     }
 
     override fun stop() {
         context.unregisterReceiver(receiver)
-        executor.shutdown()
+        adapter.cancelDiscovery()
     }
 
     override fun running(): Boolean {
         return adapter.isDiscovering
     }
 
-    override fun remoteDevice(): ObservableMap<String, CRemoteDevice> {
+    override fun remoteDevice(): LiveData<MutableMap<String, CRemoteDevice>> {
         return remoteDevice
     }
 
@@ -67,8 +70,10 @@ class BtDiscovery(private val context: Context, private val adapter: BluetoothAd
                     val device: BluetoothDevice = intent.getParcelableExtra(EXTRA_DEVICE)
                     if (device.uuids != null) {
                         device.uuids.forEach {
-                            if (it.uuid.toString() == "07d4a697-ece5-18a7-d647-ca12730cc5e6"){
-                                remoteDevice[device.address] = BtRemoteDevice(device)
+                            if (it.uuid.toString() == Const.UUID_CARPO_DEVICE.toString()) {
+                                device.createInsecureRfcommSocketToServiceRecord(Const.UUID_CARPO_DEVICE).connect()
+                                remoteDevice.value!![device.address] = BtRemoteDevice(device, Executors.newSingleThreadExecutor())
+                                remoteDevice.value = remoteDevice.value
                             }
                         }
                     }
