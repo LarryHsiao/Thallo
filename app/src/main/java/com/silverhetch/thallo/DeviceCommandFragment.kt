@@ -1,11 +1,10 @@
 package com.silverhetch.thallo
 
 import android.os.Bundle
-import android.util.Log
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
-import com.silverhetch.thallo.discovery.CRemoteDevice
+import com.silverhetch.thallo.bluetooth.CRemoteDevice
 import kotlinx.android.synthetic.main.fragment_device_command.*
 import java.util.*
 

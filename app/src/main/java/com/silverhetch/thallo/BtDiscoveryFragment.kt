@@ -13,7 +13,7 @@ import android.widget.ArrayAdapter
 import androidx.lifecycle.Observer
 import androidx.navigation.Navigation
 import com.silverhetch.aura.AuraFragment
-import com.silverhetch.thallo.discovery.CRemoteDevice
+import com.silverhetch.thallo.bluetooth.CRemoteDevice
 import kotlinx.android.synthetic.main.fragment_device_discovery.*
 
 /**

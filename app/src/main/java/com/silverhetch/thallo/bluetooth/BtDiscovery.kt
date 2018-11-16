@@ -1,5 +1,6 @@
-package com.silverhetch.thallo.discovery
+package com.silverhetch.thallo.bluetooth
 
+import android.annotation.SuppressLint
 import android.bluetooth.BluetoothAdapter
 import android.bluetooth.BluetoothAdapter.ACTION_DISCOVERY_FINISHED
 import android.bluetooth.BluetoothAdapter.ACTION_DISCOVERY_STARTED
@@ -9,24 +10,23 @@ import android.content.BroadcastReceiver
 import android.content.Context
 import android.content.Intent
 import android.content.IntentFilter
-import android.os.Handler
-import android.os.Looper
+import android.util.Log
 import androidx.lifecycle.LiveData
 import androidx.lifecycle.MutableLiveData
+import com.silverhetch.clotho.connection.socket.TextBaseConnImpl
+import com.silverhetch.clotho.utility.RevertedUUID
 import java.util.*
-import java.util.concurrent.Executors
-import java.util.concurrent.TimeUnit
 
 /**
  * Remote Device discovery by Bluetooth.
  *
- * Device UUID: e6c50c73-12ca-47d6-a718-e5ec97a6d407
+ * Please note that permissions for Bluetooth are required.
  */
-class BtDiscovery(private val context: Context, private val adapter: BluetoothAdapter) : Discovery {
+@SuppressLint("MissingPermission")
+class BtDiscovery(private val context: Context, private val adapter: BluetoothAdapter, private val uuid: UUID) : Discovery {
     private val remoteDevice = MutableLiveData<MutableMap<String, CRemoteDevice>>().apply {
         value = HashMap()
     }
-    private val mainHandler = Handler(Looper.getMainLooper())
 
     override fun start() {
         context.registerReceiver(receiver, IntentFilter().apply {
@@ -62,20 +62,29 @@ class BtDiscovery(private val context: Context, private val adapter: BluetoothAd
             when (intent.action) {
                 ACTION_FOUND -> {
                     val device: BluetoothDevice = intent.getParcelableExtra(EXTRA_DEVICE)
-                    mainHandler.post {
-                        device.fetchUuidsWithSdp()
-                    }
+                    device.fetchUuidsWithSdp()
                 }
                 ACTION_UUID -> {
                     val device: BluetoothDevice = intent.getParcelableExtra(EXTRA_DEVICE)
                     if (device.uuids != null) {
                         device.uuids.forEach {
-                            if (it.uuid.toString() == Const.UUID_CARPO_DEVICE.toString()) {
-                                device.createInsecureRfcommSocketToServiceRecord(Const.UUID_CARPO_DEVICE).connect()
-                                remoteDevice.value!![device.address] = BtRemoteDevice(device, Executors.newSingleThreadExecutor())
+                            Log.i("Bluetooth","This is uuid: "+ it.uuid)
+                            // Android may returns reverted uuid which is custom UUID.
+                            if (it.uuid.toString() == uuid.toString() || it.uuid.toString() == RevertedUUID(uuid).fetch().toString()) {
+                                val socket = device.createInsecureRfcommSocketToServiceRecord(uuid)
+                                socket.connect()
+                                remoteDevice.value!![device.address] = BtRemoteDevice(device, TextBaseConnImpl(
+                                        socket.inputStream.bufferedReader(),
+                                        socket.outputStream.bufferedWriter()) { conn, input->
+                                    conn.send("Client callback")
+                                }.apply {
+                                    launch()
+                                })
                                 remoteDevice.value = remoteDevice.value
                             }
                         }
+                    } else {
+                        device.fetchUuidsWithSdp()
                     }
                 }
             }

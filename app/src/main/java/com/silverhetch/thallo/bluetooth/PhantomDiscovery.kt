@@ -1,16 +1,22 @@
-package com.silverhetch.thallo.discovery
+package com.silverhetch.thallo.bluetooth
 
 import androidx.lifecycle.LiveData
 import androidx.lifecycle.MutableLiveData
 
+/**
+ * Phantom class of Discovery
+ */
 class PhantomDiscovery : Discovery {
     override fun stop() {
+        // ignore
     }
 
     override fun search() {
+        // ignore
     }
 
     override fun start() {
+        // ignore
     }
 
     override fun running(): Boolean {

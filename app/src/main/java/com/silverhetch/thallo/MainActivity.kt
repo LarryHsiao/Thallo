@@ -1,7 +1,6 @@
 package com.silverhetch.thallo
 
 import android.os.Bundle
-import android.view.View
 import androidx.navigation.fragment.NavHostFragment
 import com.silverhetch.aura.AuraActivity
 
@@ -9,8 +8,6 @@ import com.silverhetch.aura.AuraActivity
  * Entry point of Thallo.
  */
 class MainActivity : AuraActivity() {
-    private lateinit var root: View
-
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_main)

@@ -7,9 +7,9 @@ import android.content.ServiceConnection
 import android.os.IBinder
 import androidx.lifecycle.Observer
 import com.silverhetch.aura.AuraFragment
-import com.silverhetch.thallo.discovery.CRemoteDevice
-import com.silverhetch.thallo.discovery.Discovery
-import com.silverhetch.thallo.discovery.PhantomDiscovery
+import com.silverhetch.thallo.bluetooth.CRemoteDevice
+import com.silverhetch.thallo.bluetooth.Discovery
+import com.silverhetch.thallo.bluetooth.PhantomDiscovery
 
 abstract class ThalloFragment : AuraFragment(), ServiceConnection {
     private val devices = HashMap<String, CRemoteDevice>()
@@ -42,7 +42,7 @@ abstract class ThalloFragment : AuraFragment(), ServiceConnection {
             devices.putAll(it)
         }
         onBindService(devices)
-    }
 
+    }
     abstract fun onBindService(devices: Map<String, CRemoteDevice>)
 }

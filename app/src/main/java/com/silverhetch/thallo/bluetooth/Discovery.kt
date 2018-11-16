@@ -1,4 +1,4 @@
-package com.silverhetch.thallo.discovery
+package com.silverhetch.thallo.bluetooth
 
 import androidx.lifecycle.LiveData
 

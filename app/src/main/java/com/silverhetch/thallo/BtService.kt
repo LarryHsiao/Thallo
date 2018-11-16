@@ -5,8 +5,9 @@ import android.bluetooth.BluetoothAdapter
 import android.content.Intent
 import android.os.Binder
 import android.os.IBinder
-import com.silverhetch.thallo.discovery.BtDiscovery
-import com.silverhetch.thallo.discovery.Discovery
+import com.silverhetch.thallo.bluetooth.BtDiscovery
+import com.silverhetch.thallo.bluetooth.Discovery
+import java.util.*
 
 /**
  * Bluetooth Service. All Bluetooth operation should remains here.
@@ -17,7 +18,7 @@ class BtService : Service() {
 
     override fun onCreate() {
         super.onCreate()
-        discovery = BtDiscovery(this, BluetoothAdapter.getDefaultAdapter())
+        discovery = BtDiscovery(this, BluetoothAdapter.getDefaultAdapter(), UUID.fromString("07d4a697-ece5-18a7-d647-ca12730cc5e6"))
         discovery.start()
     }
 
